@@ -69,7 +69,17 @@ ${topicResearch.research.rawResponse}
 
 Write a high-substance, intellectually rigorous opinion piece that strictly adheres to these requirements:
 
-1. **LENGTH & DEPTH**: Must be ${opinionWordCount}–${opinionWordCount + 500} words. Do not pad; expand with substance.
+1. **CRITICAL LENGTH REQUIREMENT**: 
+   - The article body MUST be ${opinionWordCount}–${opinionWordCount + 500} words
+   - THIS IS MANDATORY - Do NOT write less than ${opinionWordCount} words
+   - Count your words carefully and ensure you meet this requirement
+   - If you're under ${opinionWordCount} words, ADD MORE SUBSTANCE:
+     * More historical context and examples
+     * Deeper analysis of implications
+     * Additional data points and evidence
+     * More thorough counterargument analysis
+   - Do not pad with fluff - expand with genuine intellectual depth
+
 2. **STRUCTURE** (NO SECTION HEADERS IN MARKDOWN):
    - Write in flowing paragraphs WITHOUT using headers like "## Context" or "## Core Argument"
    - Strong opening paragraph establishing the issue and your stance
@@ -80,14 +90,17 @@ Write a high-substance, intellectually rigorous opinion piece that strictly adhe
    - Use only the article title at the top - no other markdown headers
 
 3. **SUBSTANCE**:
-   - Use specific data points, dates, and names.
-   - Draw historical comparisons (e.g., "This mirrors the stagflation of the 1970s...").
-   - Apply philosophical or economic framing (e.g., supply-side economics, constitutional originalism).
+   - Use specific data points, dates, and names
+   - Draw historical comparisons (e.g., "This mirrors the stagflation of the 1970s...")
+   - Apply philosophical or economic framing (e.g., supply-side economics, constitutional originalism)
+   - Provide multiple examples and case studies to reach the word count
 
 4. **TONE**:
-   - The Wire Journal style: balanced, center-right perspective.
-   - Sophisticated, professional, and serious.
-   - Avoid slang, hyperbole, or superficial commentary.
+   - The Wire Journal style: balanced, center-right perspective
+   - Sophisticated, professional, and serious
+   - Avoid slang, hyperbole, or superficial commentary
+
+REMEMBER: The body text must be AT LEAST ${opinionWordCount} words. This is non-negotiable.
 
 Format your response as JSON:
 {
@@ -99,7 +112,10 @@ Format your response as JSON:
     const result = await generateJSON<{ title: string; excerpt: string; body: string }>(
       systemPrompt,
       userPrompt,
-      { temperature: 0.8 }
+      { 
+        temperature: 0.8,
+        maxTokens: Math.max(8000, Math.ceil(opinionWordCount * 2)) // Give plenty of room for long articles
+      }
     );
 
     return {
@@ -166,7 +182,9 @@ ${topicResearch.research.rawResponse}
 
 ---
 
-Provide specific, actionable feedback. If it is too short or superficial, demand specific expansions.`;
+Provide specific, actionable feedback. 
+
+IMPORTANT: Check the word count. If the body is under 1,200 words, DEMAND substantial expansion with specific areas to develop (more historical context, deeper analysis, additional examples, thorough counterargument discussion).`;
 
     return generateText(systemPrompt, userPrompt, { temperature: 0.4 });
   }

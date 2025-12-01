@@ -54,6 +54,7 @@ export async function generateJSON<T>(
   options?: {
     model?: string;
     temperature?: number;
+    maxTokens?: number;
   }
 ): Promise<T> {
   const client = getOpenAIClient();
@@ -65,6 +66,7 @@ export async function generateJSON<T>(
       { role: 'user', content: userPrompt },
     ],
     temperature: options?.temperature ?? 0.3,
+    max_tokens: options?.maxTokens ?? 6000, // Increased default for longer articles
     response_format: { type: 'json_object' },
   });
 

@@ -101,19 +101,29 @@ ${topicResearch.research.rawResponse}
 Write a complete article with:
 1. A compelling headline
 2. A 1-2 sentence excerpt/subtitle
-3. Full article body (approximately ${wordCount} words)
+3. Full article body - MUST be approximately ${wordCount} words (minimum ${Math.floor(wordCount * 0.9)} words)
+
+CRITICAL FORMATTING RULES:
+- The body text must contain at least ${Math.floor(wordCount * 0.9)} words
+- DO NOT USE MARKDOWN HEADERS (##, ###, etc.) IN THE BODY
+- Write in flowing paragraphs with natural transitions between topics
+- Use paragraph breaks to separate ideas, NOT section headers
+- Professional newspaper style - no headers, just clean prose
 
 Format your response as JSON:
 {
   "title": "Headline here",
   "excerpt": "Brief excerpt here",
-  "body": "Full article body in markdown format"
+  "body": "Full article body in clean paragraphs WITHOUT any markdown headers"
 }`;
 
     const result = await generateJSON<{ title: string; excerpt: string; body: string }>(
       systemPrompt,
       userPrompt,
-      { temperature: 0.7 }
+      { 
+        temperature: 0.7,
+        maxTokens: Math.max(4000, Math.ceil(wordCount * 2)) // Allocate enough tokens for target word count
+      }
     );
 
     return {
@@ -183,19 +193,28 @@ ${critique}
 
 ---
 
-Rewrite the article addressing ALL feedback points. Maintain the same general topic but improve quality. Target approximately ${wordCount} words for the body.
+Rewrite the article addressing ALL feedback points. Maintain the same general topic but improve quality. 
+
+CRITICAL REQUIREMENTS:
+- The body text MUST be approximately ${wordCount} words (minimum ${Math.floor(wordCount * 0.9)} words)
+- DO NOT USE MARKDOWN HEADERS (##, ###, etc.) IN THE BODY
+- Write in flowing paragraphs with natural transitions
+- Professional newspaper style - no section headers, just clean prose
 
 Format your response as JSON:
 {
   "title": "Improved headline",
   "excerpt": "Improved excerpt",
-  "body": "Improved full article body in markdown"
+  "body": "Improved article body in clean paragraphs WITHOUT markdown headers"
 }`;
 
     const result = await generateJSON<{ title: string; excerpt: string; body: string }>(
       systemPrompt,
       userPrompt,
-      { temperature: 0.6 }
+      { 
+        temperature: 0.6,
+        maxTokens: Math.max(4000, Math.ceil(wordCount * 2)) // Allocate enough tokens for target word count
+      }
     );
 
     return {
@@ -268,6 +287,7 @@ CRITICAL RULES:
 - Use specific facts, numbers, and quotes
 - Maintain strict objectivity (except for Opinion section)
 - Short paragraphs (2-3 sentences max)
+- NEVER USE MARKDOWN HEADERS (##, ###) IN ARTICLE BODIES - write in flowing paragraphs only
 - No clichés or filler phrases
 - Attribution for all claims
 - If information seems outdated, do not include it`;
