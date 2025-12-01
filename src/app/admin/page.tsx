@@ -8,6 +8,7 @@ import {
   Scale, FileText, Flame, Brain, Users, Edit3, ExternalLink, RefreshCw
 } from 'lucide-react';
 import { WRITING_STYLES } from '@/lib/writing-styles';
+import { markdownToHtml } from '@/lib/markdown';
 
 interface Article {
   id: string;
