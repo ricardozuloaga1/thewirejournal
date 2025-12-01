@@ -14,6 +14,10 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
+    // Get word count from request body
+    const body = await request.json().catch(() => ({}));
+    const wordCount = body.wordCount || 800;
+    
     // Optional: Verify cron secret for security
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
@@ -32,7 +36,7 @@ export async function POST(request: NextRequest) {
         agent_name: 'orchestrator',
         status: 'running',
         articles_created: 0,
-        metadata: { startedAt: new Date().toISOString() },
+        metadata: { startedAt: new Date().toISOString(), wordCount },
       })
       .select('id')
       .single();
@@ -40,7 +44,7 @@ export async function POST(request: NextRequest) {
     console.log('Starting agent run...', runLog?.id);
 
     // Run all agents
-    const result = await runAllAgents();
+    const result = await runAllAgents(wordCount);
 
     // Update run log
     if (runLog?.id) {

@@ -37,13 +37,13 @@ export abstract class BaseAgent {
   /**
    * Main entry point - generates articles from research
    */
-  async generateArticles(researchPacket: ResearchPacket): Promise<ArticleDraft[]> {
+  async generateArticles(researchPacket: ResearchPacket, wordCount: number = 800): Promise<ArticleDraft[]> {
     const articles: ArticleDraft[] = [];
     const topTopics = researchPacket.topics.slice(0, this.config.articlesPerRun);
 
     for (const topicResearch of topTopics) {
       try {
-        const article = await this.generateSingleArticle(topicResearch);
+        const article = await this.generateSingleArticle(topicResearch, wordCount);
         articles.push(article);
       } catch (error) {
         console.error(`Failed to generate article for topic: ${topicResearch.topic}`, error);
@@ -56,15 +56,15 @@ export abstract class BaseAgent {
   /**
    * Generate a single article using the full pipeline
    */
-  protected async generateSingleArticle(topicResearch: TopicResearch): Promise<ArticleDraft> {
+  protected async generateSingleArticle(topicResearch: TopicResearch, wordCount: number = 800): Promise<ArticleDraft> {
     // Step 1: Generate initial draft
-    const initialDraft = await this.writeDraft(topicResearch);
+    const initialDraft = await this.writeDraft(topicResearch, wordCount);
     
     // Step 2: Self-critique
     const critique = await this.critiqueDraft(initialDraft, topicResearch);
     
     // Step 3: Improve based on critique
-    const improvedDraft = await this.improveDraft(initialDraft, critique);
+    const improvedDraft = await this.improveDraft(initialDraft, critique, wordCount);
     
     // Step 4: Score quality
     const qualityScore = await this.scoreArticle(improvedDraft);
@@ -80,7 +80,7 @@ export abstract class BaseAgent {
   /**
    * Step 1: Write initial draft
    */
-  protected async writeDraft(topicResearch: TopicResearch): Promise<Omit<ArticleDraft, 'qualityScore' | 'sources'>> {
+  protected async writeDraft(topicResearch: TopicResearch, wordCount: number = 800): Promise<Omit<ArticleDraft, 'qualityScore' | 'sources'>> {
     const systemPrompt = this.getWritingSystemPrompt();
     
     const userPrompt = `Write a complete news article based on this research:
@@ -101,7 +101,7 @@ ${topicResearch.research.rawResponse}
 Write a complete article with:
 1. A compelling headline
 2. A 1-2 sentence excerpt/subtitle
-3. Full article body (500-800 words)
+3. Full article body (approximately ${wordCount} words)
 
 Format your response as JSON:
 {
@@ -164,7 +164,8 @@ Provide specific, actionable feedback for improvement.`;
    */
   protected async improveDraft(
     draft: Omit<ArticleDraft, 'qualityScore' | 'sources'>,
-    critique: string
+    critique: string,
+    wordCount: number = 800
   ): Promise<Omit<ArticleDraft, 'qualityScore' | 'sources'>> {
     const systemPrompt = this.getWritingSystemPrompt();
 
@@ -182,7 +183,7 @@ ${critique}
 
 ---
 
-Rewrite the article addressing ALL feedback points. Maintain the same general topic but improve quality.
+Rewrite the article addressing ALL feedback points. Maintain the same general topic but improve quality. Target approximately ${wordCount} words for the body.
 
 Format your response as JSON:
 {

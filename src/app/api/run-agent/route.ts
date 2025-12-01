@@ -12,7 +12,7 @@ export const maxDuration = 300; // 5 minutes max
 export const dynamic = 'force-dynamic';
 
 // Import agent functions dynamically to avoid build issues
-async function runAgentForSection(section: string, customTopic?: string) {
+async function runAgentForSection(section: string, customTopic?: string, wordCount: number = 800) {
   const { getPoliticsAgent } = await import('@/lib/agents/politics-agent');
   const { getEconomicsAgent } = await import('@/lib/agents/economics-agent');
   const { getOpinionAgent } = await import('@/lib/agents/opinion-agent');
@@ -50,7 +50,7 @@ async function runAgentForSection(section: string, customTopic?: string) {
     researchPacket = await generateResearchPacket(section as 'politics' | 'economics' | 'opinion');
   }
 
-  const articles = await agent.generateArticles(researchPacket);
+  const articles = await agent.generateArticles(researchPacket, wordCount);
   return articles;
 }
 
@@ -71,7 +71,7 @@ function estimateReadTime(body: string): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { section, topic } = body;
+    const { section, topic, wordCount = 800 } = body;
 
     if (!section) {
       return NextResponse.json({ error: 'Section is required' }, { status: 400 });
@@ -84,10 +84,10 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log(`Running ${section} agent${topic ? ` for topic: ${topic}` : ''}...`);
+    console.log(`Running ${section} agent${topic ? ` for topic: ${topic}` : ''} with ~${wordCount} words...`);
 
     // Run the agent
-    const articles = await runAgentForSection(section, topic);
+    const articles = await runAgentForSection(section, topic, wordCount);
 
     // Save to database
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;

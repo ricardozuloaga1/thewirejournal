@@ -41,13 +41,16 @@ export class OpinionAgent extends BaseAgent {
   /**
    * Override to generate longer-form opinion pieces
    */
-  protected async writeDraft(topicResearch: TopicResearch): Promise<Omit<ArticleDraft, 'qualityScore' | 'sources'>> {
+  protected async writeDraft(topicResearch: TopicResearch, wordCount: number = 800): Promise<Omit<ArticleDraft, 'qualityScore' | 'sources'>> {
     // First, determine the angle/thesis
     const angle = await this.determineAngle(topicResearch);
     
+    // Opinion pieces should be longer - multiply by 1.5x minimum
+    const opinionWordCount = Math.max(wordCount * 1.5, 1200);
+    
     const systemPrompt = this.getWritingSystemPrompt();
     
-    const userPrompt = `Write a long-form opinion/editorial piece (1,200–2,000+ words) based on this research:
+    const userPrompt = `Write a long-form opinion/editorial piece (${opinionWordCount}–${opinionWordCount + 500} words) based on this research:
 
 TOPIC: ${topicResearch.topic}
 
@@ -66,14 +69,15 @@ ${topicResearch.research.rawResponse}
 
 Write a high-substance, intellectually rigorous opinion piece that strictly adheres to these requirements:
 
-1. **LENGTH & DEPTH**: Must be 1,200–2,000+ words. Do not pad; expand with substance.
-2. **STRUCTURE**:
-   - **Hook & Thesis**: Strong opening establishing the issue and your stance.
-   - **Deep Context**: Explain *why* this matters now, historical precedents, and the current landscape.
-   - **Core Argument**: Develop 3-4 major points, each supported by data, logic, or case studies.
-   - **Counterarguments**: Devote significant space to the strongest opposing views, then respectfully dismantle them with superior logic or evidence.
-   - **Implications**: Discuss policy, economic, or cultural consequences.
-   - **Conclusion**: A powerful ending that reframes the debate.
+1. **LENGTH & DEPTH**: Must be ${opinionWordCount}–${opinionWordCount + 500} words. Do not pad; expand with substance.
+2. **STRUCTURE** (NO SECTION HEADERS IN MARKDOWN):
+   - Write in flowing paragraphs WITHOUT using headers like "## Context" or "## Core Argument"
+   - Strong opening paragraph establishing the issue and your stance
+   - Seamless transitions between sections using natural prose
+   - Develop 3-4 major points within the body, integrated naturally
+   - Address counterarguments inline, not in separate sections
+   - Conclude with a powerful ending that reframes the debate
+   - Use only the article title at the top - no other markdown headers
 
 3. **SUBSTANCE**:
    - Use specific data points, dates, and names.

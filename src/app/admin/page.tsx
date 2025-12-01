@@ -69,6 +69,7 @@ export default function AdminDashboard() {
   const [status, setStatus] = useState<string>('');
   const [customTopic, setCustomTopic] = useState('');
   const [selectedSection, setSelectedSection] = useState<string>('politics');
+  const [wordCount, setWordCount] = useState<string>('800');
   
   // Image state
   const [generatingImages, setGeneratingImages] = useState(false);
@@ -121,7 +122,11 @@ export default function AdminDashboard() {
     setError(null);
     setStatus('Running all agents... This takes 2-3 minutes');
     try {
-      const res = await fetch('/api/run-agents', { method: 'POST' });
+      const res = await fetch('/api/run-agents', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wordCount: parseInt(wordCount) })
+      });
       const data = await res.json();
       if (data.success) {
         setStatus(`Generated ${data.articlesCreated} articles`);
@@ -146,7 +151,7 @@ export default function AdminDashboard() {
       const res = await fetch('/api/run-agent', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ section, topic })
+        body: JSON.stringify({ section, topic, wordCount: parseInt(wordCount) })
       });
       const data = await res.json();
       if (data.success) {
@@ -382,6 +387,24 @@ export default function AdminDashboard() {
         {/* Generate by Category */}
         <div className="bg-white border border-gray-200 p-4 mb-6">
           <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Generate by Section</h2>
+          
+          {/* Word Count Selector */}
+          <div className="mb-4 flex items-center gap-3">
+            <label className="text-sm font-bold text-gray-700">Target Word Count:</label>
+            <select
+              value={wordCount}
+              onChange={(e) => setWordCount(e.target.value)}
+              className="px-3 py-2 text-sm border border-gray-300 focus:border-black focus:outline-none"
+            >
+              <option value="500">Short (~500 words)</option>
+              <option value="800">Medium (~800 words)</option>
+              <option value="1200">Long (~1,200 words)</option>
+              <option value="1500">Extended (~1,500 words)</option>
+              <option value="2000">In-Depth (~2,000 words)</option>
+            </select>
+            <span className="text-xs text-gray-500">Opinion pieces will be longer</span>
+          </div>
+          
           <div className="flex flex-wrap gap-2 mb-4">
             {SECTIONS.map(section => (
               <button
