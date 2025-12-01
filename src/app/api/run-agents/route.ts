@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
     // Get word count from request body
     const body = await request.json().catch(() => ({}));
     const wordCount = body.wordCount || 800;
+    const writingStyle = body.writingStyle || 'standard';
     
     // Optional: Verify cron secret for security
     const authHeader = request.headers.get('authorization');
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
     console.log('Starting agent run...', runLog?.id);
 
     // Run all agents
-    const result = await runAllAgents(wordCount);
+    const result = await runAllAgents(wordCount, writingStyle);
 
     // Update run log
     if (runLog?.id) {

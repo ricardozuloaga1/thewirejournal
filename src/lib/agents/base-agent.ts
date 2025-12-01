@@ -8,6 +8,7 @@
 import { generateText, generateJSON } from './openai';
 import type { ResearchPacket, TopicResearch } from '../research';
 import type { Article, Section, ArticleSource } from '../supabase/types';
+import { WRITING_STYLES } from '../writing-styles';
 
 export interface ArticleDraft {
   title: string;
@@ -37,13 +38,13 @@ export abstract class BaseAgent {
   /**
    * Main entry point - generates articles from research
    */
-  async generateArticles(researchPacket: ResearchPacket, wordCount: number = 800): Promise<ArticleDraft[]> {
+  async generateArticles(researchPacket: ResearchPacket, wordCount: number = 800, writingStyle: string = 'standard'): Promise<ArticleDraft[]> {
     const articles: ArticleDraft[] = [];
     const topTopics = researchPacket.topics.slice(0, this.config.articlesPerRun);
 
     for (const topicResearch of topTopics) {
       try {
-        const article = await this.generateSingleArticle(topicResearch, wordCount);
+        const article = await this.generateSingleArticle(topicResearch, wordCount, writingStyle);
         articles.push(article);
       } catch (error) {
         console.error(`Failed to generate article for topic: ${topicResearch.topic}`, error);
@@ -56,15 +57,15 @@ export abstract class BaseAgent {
   /**
    * Generate a single article using the full pipeline
    */
-  protected async generateSingleArticle(topicResearch: TopicResearch, wordCount: number = 800): Promise<ArticleDraft> {
+  protected async generateSingleArticle(topicResearch: TopicResearch, wordCount: number = 800, writingStyle: string = 'standard'): Promise<ArticleDraft> {
     // Step 1: Generate initial draft
-    const initialDraft = await this.writeDraft(topicResearch, wordCount);
+    const initialDraft = await this.writeDraft(topicResearch, wordCount, writingStyle);
     
     // Step 2: Self-critique
     const critique = await this.critiqueDraft(initialDraft, topicResearch);
     
     // Step 3: Improve based on critique
-    const improvedDraft = await this.improveDraft(initialDraft, critique, wordCount);
+    const improvedDraft = await this.improveDraft(initialDraft, critique, wordCount, writingStyle);
     
     // Step 4: Score quality
     const qualityScore = await this.scoreArticle(improvedDraft);
@@ -80,8 +81,16 @@ export abstract class BaseAgent {
   /**
    * Step 1: Write initial draft
    */
-  protected async writeDraft(topicResearch: TopicResearch, wordCount: number = 800): Promise<Omit<ArticleDraft, 'qualityScore' | 'sources'>> {
-    const systemPrompt = this.getWritingSystemPrompt();
+  protected async writeDraft(topicResearch: TopicResearch, wordCount: number = 800, writingStyle: string = 'standard'): Promise<Omit<ArticleDraft, 'qualityScore' | 'sources'>> {
+    let systemPrompt = this.getWritingSystemPrompt();
+    
+    // Inject writing style if not standard
+    if (writingStyle !== 'standard') {
+      const styleConfig = WRITING_STYLES.find(s => s.id === writingStyle);
+      if (styleConfig) {
+        systemPrompt += `\n\n${styleConfig.systemInstruction}`;
+      }
+    }
     
     const userPrompt = `Write a complete news article based on this research:
 
@@ -175,9 +184,18 @@ Provide specific, actionable feedback for improvement.`;
   protected async improveDraft(
     draft: Omit<ArticleDraft, 'qualityScore' | 'sources'>,
     critique: string,
-    wordCount: number = 800
+    wordCount: number = 800,
+    writingStyle: string = 'standard'
   ): Promise<Omit<ArticleDraft, 'qualityScore' | 'sources'>> {
-    const systemPrompt = this.getWritingSystemPrompt();
+    let systemPrompt = this.getWritingSystemPrompt();
+
+    // Inject writing style
+    if (writingStyle !== 'standard') {
+      const styleConfig = WRITING_STYLES.find(s => s.id === writingStyle);
+      if (styleConfig) {
+        systemPrompt += `\n\n${styleConfig.systemInstruction}`;
+      }
+    }
 
     const userPrompt = `Improve this article based on editorial feedback:
 

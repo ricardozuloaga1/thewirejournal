@@ -9,6 +9,7 @@
 import { BaseAgent, type AgentConfig, type ArticleDraft } from './base-agent';
 import { generateText, generateJSON } from './openai';
 import type { TopicResearch } from '../research';
+import { WRITING_STYLES } from '../writing-styles';
 
 const OPINION_CONFIG: AgentConfig = {
   name: 'Opinion Agent',
@@ -41,14 +42,22 @@ export class OpinionAgent extends BaseAgent {
   /**
    * Override to generate longer-form opinion pieces
    */
-  protected async writeDraft(topicResearch: TopicResearch, wordCount: number = 800): Promise<Omit<ArticleDraft, 'qualityScore' | 'sources'>> {
+  protected async writeDraft(topicResearch: TopicResearch, wordCount: number = 800, writingStyle: string = 'standard'): Promise<Omit<ArticleDraft, 'qualityScore' | 'sources'>> {
     // First, determine the angle/thesis
     const angle = await this.determineAngle(topicResearch);
     
     // Opinion pieces should be longer - multiply by 1.5x minimum
     const opinionWordCount = Math.max(wordCount * 1.5, 1200);
     
-    const systemPrompt = this.getWritingSystemPrompt();
+    let systemPrompt = this.getWritingSystemPrompt();
+
+    // Inject writing style
+    if (writingStyle !== 'standard') {
+      const styleConfig = WRITING_STYLES.find(s => s.id === writingStyle);
+      if (styleConfig) {
+        systemPrompt += `\n\n${styleConfig.systemInstruction}`;
+      }
+    }
     
     const userPrompt = `Write a long-form opinion/editorial piece (${opinionWordCount}–${opinionWordCount + 500} words) based on this research:
 

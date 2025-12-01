@@ -27,7 +27,7 @@ import type { Section } from '../supabase/types';
 /**
  * Run all agents and save drafts to database
  */
-export async function runAllAgents(wordCount: number = 800): Promise<{
+export async function runAllAgents(wordCount: number = 800, writingStyle: string = 'standard'): Promise<{
   success: boolean;
   articlesCreated: number;
   errors: string[];
@@ -46,13 +46,13 @@ export async function runAllAgents(wordCount: number = 800): Promise<{
 
   for (const { agent, section } of agentConfigs) {
     try {
-      console.log(`Running ${section} agent with ~${wordCount} words...`);
+      console.log(`Running ${section} agent with ~${wordCount} words in style: ${writingStyle}...`);
       
       // Generate research packet
       const researchPacket = await generateResearchPacket(section);
       
       // Generate articles
-      const articles = await agent.generateArticles(researchPacket, wordCount);
+      const articles = await agent.generateArticles(researchPacket, wordCount, writingStyle);
       
       // Save to database
       for (const article of articles) {

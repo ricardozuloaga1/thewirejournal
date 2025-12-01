@@ -7,7 +7,7 @@ import {
   Sparkles, Scissors, Expand, Target, MessageSquare, BarChart3, Quote,
   Scale, FileText, Flame, Brain, Users, Edit3, ExternalLink, RefreshCw
 } from 'lucide-react';
-import { markdownToHtml } from '@/lib/markdown';
+import { WRITING_STYLES } from '@/lib/writing-styles';
 
 interface Article {
   id: string;
@@ -70,6 +70,7 @@ export default function AdminDashboard() {
   const [customTopic, setCustomTopic] = useState('');
   const [selectedSection, setSelectedSection] = useState<string>('politics');
   const [wordCount, setWordCount] = useState<string>('800');
+  const [writingStyle, setWritingStyle] = useState<string>('standard');
   
   // Image state
   const [generatingImages, setGeneratingImages] = useState(false);
@@ -125,7 +126,7 @@ export default function AdminDashboard() {
       const res = await fetch('/api/run-agents', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ wordCount: parseInt(wordCount) })
+        body: JSON.stringify({ wordCount: parseInt(wordCount), writingStyle })
       });
       const data = await res.json();
       if (data.success) {
@@ -151,7 +152,7 @@ export default function AdminDashboard() {
       const res = await fetch('/api/run-agent', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ section, topic, wordCount: parseInt(wordCount) })
+        body: JSON.stringify({ section, topic, wordCount: parseInt(wordCount), writingStyle })
       });
       const data = await res.json();
       if (data.success) {
@@ -389,20 +390,39 @@ export default function AdminDashboard() {
           <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Generate by Section</h2>
           
           {/* Word Count Selector */}
-          <div className="mb-4 flex items-center gap-3">
-            <label className="text-sm font-bold text-gray-700">Target Word Count:</label>
-            <select
-              value={wordCount}
-              onChange={(e) => setWordCount(e.target.value)}
-              className="px-3 py-2 text-sm border border-gray-300 focus:border-black focus:outline-none"
-            >
-              <option value="500">Short (~500 words)</option>
-              <option value="800">Medium (~800 words)</option>
-              <option value="1200">Long (~1,200 words)</option>
-              <option value="1500">Extended (~1,500 words)</option>
-              <option value="2000">In-Depth (~2,000 words)</option>
-            </select>
-            <span className="text-xs text-gray-500">Opinion pieces will be longer</span>
+          <div className="mb-4 flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-bold text-gray-700">Target Word Count:</label>
+              <select
+                value={wordCount}
+                onChange={(e) => setWordCount(e.target.value)}
+                className="px-3 py-2 text-sm border border-gray-300 focus:border-black focus:outline-none"
+              >
+                <option value="500">Short (~500 words)</option>
+                <option value="800">Medium (~800 words)</option>
+                <option value="1200">Long (~1,200 words)</option>
+                <option value="1500">Extended (~1,500 words)</option>
+                <option value="2000">In-Depth (~2,000 words)</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-bold text-gray-700">Writing Style:</label>
+              <select
+                value={writingStyle}
+                onChange={(e) => setWritingStyle(e.target.value)}
+                className="px-3 py-2 text-sm border border-gray-300 focus:border-black focus:outline-none w-64"
+              >
+                {WRITING_STYLES.map(style => (
+                  <option key={style.id} value={style.id}>{style.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          
+          {/* Style Description */}
+          <div className="mb-6 p-3 bg-gray-50 border border-gray-200 text-sm text-gray-600 italic">
+            {WRITING_STYLES.find(s => s.id === writingStyle)?.description}
           </div>
           
           <div className="flex flex-wrap gap-2 mb-4">
