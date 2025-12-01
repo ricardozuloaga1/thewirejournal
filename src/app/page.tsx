@@ -1,65 +1,104 @@
-import Image from "next/image";
+import Header from "@/components/Header";
+import MarketTicker from "@/components/MarketTicker";
+import LeadStory from "@/components/LeadStory";
+import WhatsNews from "@/components/WhatsNews";
+import OpinionSidebar from "@/components/OpinionSidebar";
+import Footer from "@/components/Footer";
+import SecondaryStories from "@/components/SecondaryStories";
+import { getLeadStory, getPublishedArticles, getOpinionArticles, getLatestHeadlines } from "@/lib/articles";
 
-export default function Home() {
+export const revalidate = 60; // Revalidate every 60 seconds
+
+export default async function Home() {
+  // Fetch all data in parallel
+  const [leadStory, allArticles, opinions, headlines] = await Promise.all([
+    getLeadStory(),
+    getPublishedArticles(10),
+    getOpinionArticles(4),
+    getLatestHeadlines(8),
+  ]);
+
+  // Get secondary stories (exclude lead story)
+  const secondaryStories = allArticles
+    .filter(a => a.id !== leadStory?.id)
+    .slice(0, 4);
+
+  // Split headlines for What's News
+  const businessNews = headlines
+    .filter(h => ['economics', 'business', 'tech'].includes(h.section))
+    .slice(0, 4)
+    .map(h => ({ title: h.title, slug: h.slug }));
+  
+  const worldNews = headlines
+    .filter(h => ['politics', 'world', 'opinion'].includes(h.section))
+    .slice(0, 4)
+    .map(h => ({ title: h.title, slug: h.slug }));
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-screen bg-white pb-0">
+      <Header />
+      <MarketTicker />
+      
+      <div className="container mx-auto px-4 pt-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-0">
+          
+          {/* Left Column: What's News */}
+          <div className="lg:col-span-2 border-r border-gray-200 pr-4 hidden lg:block">
+             <WhatsNews 
+               businessNews={businessNews.length > 0 ? businessNews : undefined}
+               worldNews={worldNews.length > 0 ? worldNews : undefined}
+             />
+          </div>
+
+          {/* Middle Column: Lead Story & Main Feed */}
+          <div className="lg:col-span-7 lg:px-6">
+            {leadStory ? (
+              <LeadStory 
+                category={leadStory.section.charAt(0).toUpperCase() + leadStory.section.slice(1)}
+                headline={leadStory.title}
+                summary={leadStory.excerpt}
+                author={leadStory.author}
+                readTime={leadStory.readTime}
+                imageUrl={leadStory.imageUrl}
+                slug={leadStory.slug}
+              />
+            ) : (
+              <LeadStory 
+                category="Welcome"
+                headline="Your AI Newsroom is Ready"
+                summary="No articles have been published yet. Go to the Admin Dashboard and click 'Run Agents' to generate your first articles, then publish them to see them here."
+                author="The Wire"
+                readTime="1 min read"
+              />
+            )}
+            
+            {/* Secondary Stories Grid */}
+            <SecondaryStories stories={secondaryStories} />
+          </div>
+
+          {/* Right Column: Opinion */}
+          <div className="lg:col-span-3 lg:pl-4 lg:border-l border-gray-200 mt-8 lg:mt-0">
+             <OpinionSidebar 
+               opinions={opinions.length > 0 ? opinions.map(op => ({
+                 title: op.title,
+                 author: op.author,
+                 slug: op.slug,
+               })) : undefined} 
+             />
+          </div>
+
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        
+        {/* Mobile What's News (shown below main content on mobile) */}
+        <div className="lg:hidden mt-10 border-t border-gray-200 pt-6">
+           <WhatsNews 
+             businessNews={businessNews.length > 0 ? businessNews : undefined}
+             worldNews={worldNews.length > 0 ? worldNews : undefined}
+           />
         </div>
-      </main>
-    </div>
+      </div>
+      
+      <Footer />
+    </main>
   );
 }
