@@ -1,0 +1,38 @@
+# Flask Backend Dependencies for The Wire Journal
+
+# Core Framework
+Flask==3.0.0
+Flask-CORS==4.0.0
+
+# Database
+supabase>=2.25.0
+# psycopg2-binary not needed - we use Supabase client
+
+# Authentication
+Flask-JWT-Extended==4.6.0
+Flask-Bcrypt==1.0.1
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# AI/ML Services
+openai==1.51.0
+requests==2.31.0
+
+# Data Validation (optional - not critical for MVP)
+# pydantic==2.5.0  # Commented out - Python 3.14 compatibility issue
+
+# Date/Time
+python-dateutil==2.8.2
+
+# HTTP Client (upgraded for Python 3.14 compatibility)
+httpx>=0.28.0
+httpcore>=1.0.0
+websockets>=15.0.0
+
+# JSON handling
+python-json-logger==2.0.7
+
+# Task scheduling (for cron jobs)
+APScheduler==3.10.4
+
